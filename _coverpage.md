@@ -1,11 +1,11 @@
-<p align="center">
-<img src="https://ss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=2481424715,2807309609&fm=26&gp=0.jpg" width="200" height="200"/>
+<p align=" Knowledge Brain | 第2大脑">
+<img src="https://image-bed-20181207-1257458714.cos.ap-shanghai.myqcloud.com/Blog-20190315/hot-18-star-logo.png" 
+    width="200" height="200"/>
 </p>
-<h1 align="center">docsify-demo</h1>
+<h1 align="center">Knowledge Brain | 第2大脑</h1>
 
-[常用资源](https://shimo.im/docs/MuiACIg1HlYfVxrj/)
-[GitHub](https://github.com/Snailclimb/docsify-demo)
-[开始阅读](#docsify-demo)
+[我的博客](http://liubaoshuai.com/)
+[开始阅读](#database)
 
 
 
