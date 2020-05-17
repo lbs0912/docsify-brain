@@ -5,7 +5,7 @@
 <h1 align="center">Knowledge Brain | 第2大脑</h1>
 
 [我的博客](http://liubaoshuai.com/)
-[开始阅读](#database)
+[开始阅读](#第2大脑)
 
 
 
