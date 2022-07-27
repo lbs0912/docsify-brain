@@ -150,6 +150,14 @@ public interface RunnableFuture<V> extends Runnable, Future<V> {
 
 ### CompletableFuture相关API
 
+使用 Future 获得异步执行结果时，要么调用阻塞方法 `get()`，要么轮询看 `isDone()` 是否为 true，这两种方法都不是很好，因为主线程也会被迫等待。
+
+从 Java 8 开始引入了 CompletableFuture，它针对 Future 做了改进，可以传入回调对象，当异步任务完成或者发生异常时，自动调用回调对象的回调方法。
+* 异步任务结束时，会自动回调某个对象的方法；
+* 异步任务出错时，会自动回调某个对象的方法；
+* 主线程设置好回调后，不再关心异步任务的执行。
+
+
 #### 创建任务
 * `runAsync` 用于创建不带返回值的异步任务
 * `supplyAsync` 用于创建带返回值的异步任务 `CompletableFuture`
@@ -161,6 +169,12 @@ public interface RunnableFuture<V> extends Runnable, Future<V> {
 * `thenApplyAsync/thenAcceptAsync/thenRunAsync`
 * `exceptionally`
 * `handle/whenComplete`
+
+
+> CompletableFuture 的命名规则
+> 
+> 1. `xxx()`：表示该方法将继续在已有的线程中执行；
+> 2. `xxxAsync()`：表示将异步在线程池中执行。
 
 
 |     方法       |         说明           | 

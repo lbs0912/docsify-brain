@@ -531,4 +531,115 @@ public class ReadingListApplication {
 
 
 
+## @Order
+
+* [浅谈Spring @Order注解的使用 | CSDN](https://blog.csdn.net/yaomingyang/article/details/86649072)
+
+
+
+**注解 `@Order` 或者接口 `Ordered` 的作用是定义 Spring IOC 容器中 Bean 的执行顺序的优先级，而不是定义 Bean 的加载顺序，Bean 的加载顺序不受 `@Order` 或 `Ordered` 接口的影响。**
+
+
+### 源码
+
+`@Order` 注解的源码如下。
+
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
+@Documented
+public @interface Order {
+
+	/**
+	 * 默认是最低优先级,值越小优先级越高
+	 */
+	int value() default Ordered.LOWEST_PRECEDENCE;
+
+}
+```
+* 注解可以作用在类（接口、枚举）、方法、字段声明（包括枚举常量）
+* 注解有一个 `int` 类型的参数，可以不传，默认是最低优先级
+* 通过常量类的值，我们可以推测参数值越小优先级越高
+
+
+`Ordered` 接口的源码如下。
+
+```java
+package org.springframework.core;
+
+public interface Ordered {
+    int HIGHEST_PRECEDENCE = -2147483648;
+    int LOWEST_PRECEDENCE = 2147483647;
+
+    int getOrder();
+}
+```
+
+
+#### Bean的执行顺序
+
+
+
+> 实现 `CommandLineRunner` 接口的类会在 Spring IOC 容器加载完毕后执行，适合预加载类及其它资源；也可以使用 `ApplicationRunner`，使用方法及效果是一样的。
+
+
+
+创建 `BlackPersion`、`YellowPersion` 类，这两个类都实现 `CommandLineRunner`。
+
+
+```java
+package com.yaomy.common.order;
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+
+/**
+ * @Description: Description
+ * @ProjectName: spring-parent
+ * @Version: 1.0
+ */
+@Component
+@Order(1)
+public class BlackPersion implements CommandLineRunner {
+    @Override
+    public void run(String... args) throws Exception {
+        System.out.println("----BlackPersion----");
+    }
+}
+```
+
+
+```java
+package com.yaomy.common.order;
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+
+/**
+ * @Description: Description
+ * @ProjectName: spring-parent
+ * @Version: 1.0
+ */
+@Component
+@Order(0)
+public class YellowPersion implements CommandLineRunner {
+    @Override
+    public void run(String... args) throws Exception {
+        System.out.println("----YellowPersion----");
+    }
+}
+```
+
+
+启动应用程序打印出结果。
+
+```s
+----YellowPersion----
+----BlackPersion----
+```
+
+我们可以通过调整 `@Order` 的值来调整类执行顺序的优先级，即执行的先后。当然也可以将 `@Order` 注解更换为 `Ordered`接口，效果是一样的。
+
 

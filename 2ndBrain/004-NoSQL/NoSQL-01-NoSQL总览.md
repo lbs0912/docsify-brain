@@ -45,7 +45,12 @@
 * ref 1-[NoSQL中Memcached、Redis、MongoDB的对比](https://juejin.cn/post/7086380009778053151)
 
 
+
+
+
 Memcache 和 Redis 这两个 key-value 存储数据库的区别如下。
+
+> **Memcache 的单个 value 最大 1MB，Redis 的单个 value 最大 512 MB。**
 
 Memcache
 1. 较早出现的 NoSQL 数据库
@@ -59,11 +64,32 @@ Redis
 4. 支持简单的事务需求，但业界使用场景很少，并不成熟
 
 
-另外，MongoDB的对比如下
+另外，MongoDB 的对比如下
 1. 文档存储，支持丰富的数据表达，内置了数据分析的功能
 2. 适合大容量的存储，适用于海量数据的访问
 3. **不支持事务**
 4. 从 1.8 版本开始采用 `binlog` 方式支持持久化的可靠性
+
+
+#### Memecache和Redis区别
+
+1. 存储方式
+   * Memecache 把数据全部存在内存之中，断电后会挂掉，数据不能超过内存大小。
+   * Redis 有部份存在硬盘上，redis可以持久化其数据。
+2. 数据支持类型 
+   * Memcached 所有的值均是简单的字符串
+   * Redis 作为其替代者，支持更为丰富的数据类型，提供 list，set，zset，hash 等数据结构的存储 
+3. 使用底层模型不同
+   * 它们之间底层实现方式，以及与客户端之间通信的应用协议不一样。 
+   * Redis 直接自己构建了 VM 机制，因为一般的系统调用系统函数的话，会浪费一定的时间去移动和请求。
+4. value 值大小不同
+   * Redis 可以达到 512 MB。
+   * Memcache 只有 1mb。
+5. Redis 的速度比 Memcached 快很多
+6. Redis 支持数据的备份，即 master-slave 模式的数据备份。
+
+
+
 
 
 ## CAP定理
@@ -82,6 +108,8 @@ CAP 定理（CAP theorem）, 又被称作「布鲁尔定理（Brewer's theorem�
 3. AP - 满足可用性，分区容错性的系统，通常对一致性要求低一些。典型应用：DynamoDB
 
 
+> 对于分布式系统来说，P（分区容错性）是必选项。满足 CA 的适用于单点集群。
+
 ![cap-theorem-1](https://image-bed-20181207-1257458714.cos.ap-shanghai.myqcloud.com/back-end-2022/cap-theorem-1.png)
 
 
@@ -96,9 +124,12 @@ CAP 理论是分布式中基础理论。针对 CAP 理论，延伸出
 ### Base理论
 
 BASE 理论是 CAP 中一致性和可用性权衡的结果。是 CAP 中的 AP 的延伸。注重可用性和性能优先，根据业务的场景特点，实现弹性的基本可用，然后实现数据的最终一致性。**BASE 理论在 NoSQL 中应用广泛，是 NoSQL 系统设计的事实上的理论支撑。**
-* 基本可用 BA（Basically Available）
-* 软状态 S（Soft state）
-* 最终一致性 E（Eventually consistent）：系统中的所有的数据副本在经过一段时间的同步后，最终能够达到一个一致的状态。最终可以理解为一个短暂的延迟。
+
+1. 基本可用 BA（Basically Available）
+2. 软状态 S（Soft state）
+   * 软状态和硬状态相对，是指允许系统中的数据存在中间状态，并认为该中间状态的存在不会影响系统的整体可用性，即允许系统在不同节点的数据副本之间进行数据传输的过程存在延时。
+3. 最终一致性 E（Eventually consistent）
+   * 系统中的所有的数据副本在经过一段时间的同步后，最终能够达到一个一致的状态。最终可以理解为一个短暂的延迟。
 
 
 

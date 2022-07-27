@@ -263,6 +263,14 @@ ES 翻页，有下面几种方案
 
 
 
+
+### ES的filesystem cache
+* ES 会将磁盘中的数据自动缓存到 `filesystem cache`，在内存中查找，提升了速度
+* 若 `filesystem cache` 无法容纳索引数据文件，则会基于磁盘查找，此时查询速度会明显变慢
+* 若数量两过大，基于「ES 查询的的 query 和 fetch 两个阶段」，可使用 ES + HBase 架构，保证 ES 的数据量小于 `filesystem cache`，保证查询速度
+
+
+
 ### 组合使用Hbase
 
 * ref 1-[ES 亿级数据检索优化，三秒返回突破性能瓶颈 | InfoQ](https://www.infoq.cn/article/wymrl5h80sfawg8u7ede)

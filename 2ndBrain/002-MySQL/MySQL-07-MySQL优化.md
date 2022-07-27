@@ -16,6 +16,42 @@
 
 
 
+## 慢查询
+* [MySQL索引原理及慢查询优化 | 美团技术](https://tech.meituan.com/2014/06/30/mysql-index.html)
+* [SQL 查询速度慢原因及优化方法 | CSDN](https://blog.csdn.net/GX_1_11_real/article/details/88699445)
+
+
+
+### 如何定位慢查询
+1. 慢查询日志
+2. 服务监控
+
+
+### 慢查询的可能原因
+
+SQL 查询慢的可能原因如下
+1. 没有索引或者没有用到索引（这是查询慢最常见的问题，是程序设计的缺陷）
+2. I/O 吞吐量小，形成了瓶颈效应
+3. 没有创建计算列导致查询不优化
+4. 内存不足
+5. 网络速度慢
+6. 查询出的数据量过大（可以采用多次查询，其他的方法降低数据量）
+7. 锁或者死锁（这也是查询慢最常见的问题，是程序设计的缺陷）
+8. sp_lock，sp_who，活动的用户查看，原因是读写竞争资源。
+9. 返回了不必要的行和列
+10. 查询语句不好，没有优化
+
+
+### 如何优化
+
+* [MySQL六十六问，两万字+五十图详解](https://mp.weixin.qq.com/s/zSTyZ-8CFalwAYSB0PN6wA)
+
+
+
+![](https://image-bed-20181207-1257458714.cos.ap-shanghai.myqcloud.com/back-end-2023/mysql-slow-query-improve-1.png)
+
+
+
 ## MySQL 优化
 * ref 1-[MySQL 优化的思路](https://mp.weixin.qq.com/s/jnVyMW18Oj9LAS0bPN1NKg)
 
@@ -258,7 +294,8 @@ MySQL 对于 `IN` 做了相应的优化，即将 `IN` 中的常量全部存储�
 2. `order by null` 不排序
 3. 尽量使用「内存临时表」。MySQL 临时表分内存临时表和磁盘临时表。`group by` 在执行过程中使用内存临时表还是不够用，那就会使用磁盘临时表。内存临时表默认大小是 16M。
 4. SQL_BIG_RESULT
-
+   * 如果数据量实在过大，大到内存临时表都不够用了，这时就转向使用磁盘临时表。而发现不够用再转向这个过程也是很耗时的，那我们有没有一种方法，可以告诉 mysql 从一开始就使用磁盘临时表呢？
+   * 有的，在 group by 语句中加入 SQL_BIG_RESULT 提示 MySQL 优化器直接用磁盘临时表。优化器分析，磁盘临时表是 B+ 树存储，存储效率不如数组来得高。所以直接用数组存储。
 
 
 

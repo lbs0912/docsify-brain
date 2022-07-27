@@ -24,7 +24,273 @@
 
   
 
+## Spring面试汇总
 
+
+### Spring为什么把Bean设为单例
+1. 提高性能，减少了新生成实例的消耗
+2. 减少了 JVM 的垃圾回收
+3. 可以快速获取到 bean（单例的获取除了第一次生成之外都是从缓存中获取的）
+
+
+### Spring bean的id和name的区别
+* [spring bean id和bean name的区别](https://blog.csdn.net/weixin_34279184/article/details/85743761)
+
+1. id：一个 bean 的唯一标识，命名格式必须符合 XML ID 属性的命名规范
+2. name：可以用特殊字符，并且一个 bean 可以用多个名称，`name="bean1,bean2,bean3"`，用逗号或者分号或者空格隔开。
+3. **如果一个 bean 没有指定 id，则 name 的第一个名称默认是 id。**
+
+
+spring 容器如何处理同名 bean？
+1. 同一个 spring 配置文件中，bean的 id、name 是不能够重复的，否则 spring 容器启动时会报错。
+2. 如果一个 spring 容器从多个配置文件中加载配置信息，则多个配置文件中是允许有同名 bean 的，并且后面加载的配置文件的中的 bean 定义会覆盖前面加载的同名 bean。
+
+
+spring 容器如何处理没有指定id、name 属性的 bean？
+1. 如果 一个 `<bean>` 标签未指定 id、name 属性，则 spring 容器会给其一个默认的id，值为其类全名。
+2. 如果有多个 `<bean>` 标签未指定 id、name 属性，则 spring 容器会按照其出现的次序，分别给其指定 id 值为 `"类全名#1"`，`"类全名#2"`。
+
+
+举个例子，如下配置文件。
+
+```xml
+<bean class="com.xxx.UserInfo">  
+    <property name="accountName" value="no-id-no-name0"></property>  
+</bean>  
+  
+<bean class="com.xxx.UserInfo">  
+    <property name="accountName" value="no-id-no-name1"></property>  
+</bean>  
+  
+<bean class="com.xxx.UserInfo">  
+    <property name="accountName" value="no-id-no-name2"></property>  
+</bean>  
+```
+
+上述 bean 都没有指定 id 和 name，在获取这些bean 时，其对应 id 为 `"类全名#1"`，`"类全名#2"`。
+
+```java
+// 获取bean的方式
+UserInfo u = (UserInfo)ctx.getBean("com.xxx.UserInfo");  
+UserInfo u1 = (UserInfo)ctx.getBean("com.xxx.UserInfo#1");  
+UserInfo u2 = (UserInfo)ctx.getBean("com.xxx.UserInfo#2");
+```
+
+
+
+### Spring中有两个id相同的bean，会报错吗？如果报错，在哪个阶段报错
+* [Spring 中，有两个 id 相同的 bean，会报错吗?如果会报错，在哪个阶段报错](https://juejin.cn/post/7112361883327266847)
+
+
+针对「Spring中有两个id相同的bean，会报错吗？如果报错，在哪个阶段报错」这个问题，回答如下。
+
+1. 首先，在同一个 XML 配置文件里面，不能存在 id 相同的两个 bean，否则 spring 容器启动的时候会报错。因为 id 这个属性表示一个 Bean 的唯一标志符号，所以 Spring 在启动的时候会去验证 id 的唯一性，一旦发现重复就会报错。这个错误发生 Spring 对 XML 文件进行解析，转化为 BeanDefinition 的阶段。
+
+2. 但是，在两个不同的 Spring 配置文件里面，可以存在 id 相同的两个 bean。IOC 容器在加载 Bean 的时候，默认会多个相同 id 的 bean 进行覆盖。不过，在 Spring 3.x 版本以后，这个问题发生了变化。
+
+3. 我们知道 Spring 3.x 里面提供 `@Configuration` 注解去声明一个配置类，然后使用 `@Bean` 注解实现 Bean 的声明，这种方式完全取代了 XMl。在这种情况下，如果我们在同一个配置类里面声明多个相同名字的 bean，在 Spring IOC 容器中只会注册第一个声明的 Bean 的实例。后续重复名字的 Bean 就不会再注册了。
+
+```java
+@Configuration
+public class SpringConfiguration {
+    @Bean(name = "userService")
+    public UserService01 userService01(){
+        return new UserService01();
+    }
+    @Bean(name = "userService")
+    public UserService02 userService02(){
+        return new UserService02();
+    }
+}
+```
+像上面这样一段代码，在 Spring IOC 容器里面，只会保存 UserService01 这个实例，后续相同名字的实例不会再加载。
+
+如果使用 `@Autowired` 注解根据类型实现依赖注入，因为 IOC 容器只有 `UserService01` 的实例，所以启动的时候会提示找不到 `UserService02` 这个实例。
+
+
+```java
+@Autowired
+private  UserService01 userService01;
+
+@Autowired
+private  UserService02 userService02;
+```
+
+如果使用 `@Resource` 注解根据名词实现依赖注入，在 IOC 容器里面得到的实例对象是 `UserService01`。于是 Spring 把 `UserService01` 这个实例赋值给 `UserService02`，就会提示类型不匹配错误。
+
+
+```java
+@Resource(name="userService")
+private  UserService01 userService01;
+
+@Resource(name="userService")
+private  UserService02 userService02;
+```
+
+这个错误，是在 Spring IOC 容器里面的 Bean 初始化之后的依赖注入阶段发生的。
+
+
+
+### Spring Boot的约定优于配置
+* ref 1-[对Spring Boot的约定优于配置的理解 | 掘金](https://juejin.cn/post/7084136380095266823)
+
+对「Spring Boot的约定优于配置」这句话，如何理解？
+
+
+1. 首先，约定优于配置是一种软件设计的范式，它的核心思想是减少软件开发人员对于配置项的维护，从而让开发人员更加聚焦在业务逻辑上。
+2. Spring Boot 就是约定优于配置这一理念下的产物，它类似于 Spring 框架下的一个脚手架，通过 Spring Boot，我们可以快速开发基于 Spring 生态下的应用程序。
+3. 基于传统的 Spring 框架开发 web 应用，我们需要做很多和业务开发无关并且只需要做一次的配置，比如
+   * 管理 jar 包依赖
+   * web.xml 维护
+   * Dispatch-Servlet.xml 配置项维护
+   * 应用部署到 Web 容器
+   * 第三方组件集成到 Spring IOC 容器中的配置项维护
+
+而在 Spring Boot 中，我们不需要再去做这些繁琐的配置，Spring Boot 已经自动帮我们完成了，这就是约定由于配置思想的体现。
+
+4. Spring Boot 约定由于配置的体现有很多，比如
+   * Spring Boot Starter 启动依赖，它能帮我们管理所有 jar 包版本。
+   * 如果当前应用依赖了 spring mvc 相关的 jar，那么 Spring Boot 会自动内置 Tomcat 容器来运行 web 应用，我们不需要再去单独做应用部署。
+   * Spring Boot 的自动装配机制的实现中，通过扫描约定路径下的 spring.factories 文件来识别配置类，实现 Bean 的自动装配。
+   * 默认加载的配置文件 application.properties
+
+总的来说，约定优于配置是一个比较常见的软件设计思想，它的核心本质都是为了更高效以及更便捷的实现软件系统的开发和维护。
+
+
+
+
+### 类的静态方法无法使用AOP拦截
+* ref 1-[static 方法能被 AOP 动态代理吗 | CSDN](https://blog.csdn.net/sdmanooo/article/details/122467797)
+* ref 2-[AOP 不能对类的静态方法进行增强](https://blog.csdn.net/weixin_29576901/article/details/117481744)
+
+> 为什么 static 方法不能被动态代理？
+
+**类的静态方法无法使用 AOP 拦截，即 AOP 不能对类的静态方法进行增强。**
+
+
+因为不管是 JDK 的动态代理，还是 CGLIB 的动态代理，都是要通过代理的方式获取到代理的**具体对象**，而 static 是不属于对象的，是属于类。所以静态方法是不能被重写的，正因为不能被重写，所以动态代理也不成立。
+
+
+> 如果一定要增强 static 方法，要如何做？
+
+如果一定要增强静态方法，我们可以对目标类使用单例模式，然后通过调用实例方法去调用那个静态方法，而且对应的对象实例必须纳入 spring 容器管理，因此可以使用`@Component` 声明下（注意不能直接 new，直接 new 的对象不会纳入 IOC 管理，这样就不会被 AOP 识别），然后在 set 实例方法上使用 `@Autowired`，将对象注入到 `static` 修饰的静态类对象。
+
+
+### AOP的嵌套调用
+* ref 1-[解决AOP切面在嵌套方法调用时不生效问题](https://www.freesion.com/article/3329487995/)
+
+
+在使用 AOP 切面编程中，通常会遇到一个方法嵌套调用，导致 AOP 不生效的问题。如下面所说明的
+1. 在一个实现类中，有 2 个方法，方法 A，方法 B，其中方法 B 上面有个注解切面，当方法 B 被外部调用的时候，会进入切面方法。
+2. 但当方法 B 是被方法 A 调用时，并不能从方法 B 的注解上，进入到切面方法，即我们经常碰到的方法嵌套时，AOP 注解不生效的问题。
+
+
+> 问题描述
+
+假设对 `methodDemoA` 方法的 AOP 增强方位为打印 A，对 `methodDemoB` 方法的 AOP 增强方位为打印 B。
+
+* 场景1：单独调用方法 A 和方法 B时，两个方法对应的 AOP 增强方法都会被调用，会打印出 A 和 B
+
+```java
+@Autowired
+DemoService demoService;
+
+@Test
+public void testMethod(){
+    demoService.methodDemoA();
+    demoService.methodDemoB();
+}
+```
+
+
+* 场景2：如果在方法 A 内部去调用方法 B，则只会打印出 A，不会打印 B
+
+
+```java
+@Service
+public class DemoServiceImpl implements DemoService {
+    @Override
+    public void methodDemoA(){
+        System.out.println("this is method A");
+        methodDemoB();
+    }
+
+    @Override
+    @DemoAnno
+    public void methodDemoB() {
+        System.out.println("this is method B");
+    }
+}
+```
+
+```java
+@Autowired
+DemoService demoService;
+
+@Test
+public void testMethod(){
+    demoService.methodDemoA();
+    //demoService.methodDemoB();
+}
+```
+
+
+
+
+> 原因分析
+
+场景 1 中，方法 A 和方法 B 都是通过外部调用的。Spring 在启动时，根据切面类及注解，生成了 DemoService 的代理类，在调用方法 B 时，实际上是代理类先对目标方法进行了业务增强处理（执行切面类中的业务逻辑，如执行 `proxyB` 代理方法），然后再调用方法 B 本身。所以场景 1 可以正常进入切面方法，表现为打印 A 和 B。
+
+场景 2 中，通过外部调用的是方法 A，方法 B 是内部调用的。虽然 Spring 也会创建一个代理类去调用方法 A，**但当方法 A 调用方法 B 的时候，属于类里面的内部调用，使用的是实例对象本身去去调用方法 B**，非 AOP 的代理对象调用，方法 B 自然就不会进入到切面方法了。
+
+
+> 如何解决
+
+
+对于场景 2，我们在业务开发过程中经常会碰到，但我们期望的是，方法 A 在调用方法 B 的时候，仍然能够进入切面方法，即需要 AOP 切面生效。
+
+这种情况下，我们在调用方法 B 的时候，需要使用 `AopContext.currentProxy()` 获取当前的代理对象，然后使用代理对象调用方法 B。
+
+> 需要开启 `exposeProxy=true` 的配置，SpringBoot 项目中，可以在启动类上面，添加 `@EnableAspectJAutoProxy(exposeProxy = true)` 注解。
+
+
+```java
+@Service
+public class DemoServiceImpl implements DemoService {
+    @Override
+    public void methodDemoA(){
+        System.out.println("this is method A");
+        DemoService service = (DemoService) AopContext.currentProxy();
+        service.methodDemoB();
+    }
+
+    @Override
+    @DemoAnno
+    public void methodDemoB() {
+        System.out.println("this is method B");
+    }
+}
+```
+
+
+
+### Spring 中 Bean 的 ID 一定要有吗
+
+* ref 1-[Spring 中 bean 的 id 是否一定要有](https://blog.csdn.net/guan3515/article/details/85675419)
+
+1. 每个 Bean 可以有一个 id 属性，并可以根据该 id 在 IoC 容器中查找该 Bean，该 id 属性值必须在 IoC 容器中唯一。
+2. 可以不指定 id 属性，只指定全限定类名，如下代码所示。此时需要通过接口 `getBean(Class<T> requiredType)` 来获取 Bean。
+
+
+```xml
+<bean class="com.zyh.spring3.hello.StaticBeanFactory"></bean>
+```
+
+
+如果该 Bean 找不到则抛异常 `NoSuchBeanDefinitionException`。如果该类型的 Bean 有多个，也会抛异常 `NoUniqueBeanDefinitionException`。
+
+3. 如果不指定 id，只指定 name，那么 name 为 Bean 的标识符，并且需要在容器中唯一。
+4. 同时指定 name 和 id，此时 id 为标识符，而 name 为 Bean 的别名，两者都可以找到目标Bean。
 
 
 

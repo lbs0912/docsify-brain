@@ -798,11 +798,6 @@ XxxClassLoader.parent=AppClassLoader
 
 
 
-
-
-
-
-
 ### 委派
 
 
@@ -889,6 +884,9 @@ public abstract class ClassLoader {
 
 
 ### 双亲委派的优点
+
+
+> 一句话总结，双亲委派可以保证一个类不会被多个类加载器重复加载，并且保证核心 API 不会被篡改。
 
 #### 避免类的重复加载
 
@@ -1124,6 +1122,20 @@ jar:file:/Library/Java/JavaVirtualMachines/jdk1.8.0_231.jdk/Contents/Home/jre/li
         }
     }
 ```
+
+
+
+#### 如何设计一个热加载
+* ref 1-[Java类加载器——热替换 | CSDN](https://blog.csdn.net/zxd1435513775/article/details/78839363)
+* ref 1-[JVM 从类加载器到热加载 | 掘金](https://juejin.cn/post/6921691978828611591)
+
+如何设计一个热加载的实现？
+1. 需要一个文件夹监听器，发现目录下的 `.class` 文件发生变更，便重新加载
+2. 提供自己的类加载器并需要重写 `loadClass` 方法，即可完成自己的类加载机制
+3. 只有自定义类加载器加载的类才可以卸载，卸载的办法很简单，把类对象、Class 对象、classloader 对象的引用设置为 null，JVM 就会把它们当作是垃圾，会在适当的时候，卸载掉内存方法区中的二进制数据。
+4. 在同一个命名空间中，不可能出现类名相同的两个类
+5. 在不同的命名空间中，可能出现类名相同的两个类（类名指类全称）
+
 
 
 ### 热部署

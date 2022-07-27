@@ -81,7 +81,7 @@ on user.name = depart.name;
 * where 用在 group by 之前，having 用在 group by 之后
 * where 用于条件筛选，having 用于分组后筛选
 * where 条件后面不能跟聚合函数；having 一般配合 group by 或者聚合函数（min、max、avg、count、sum）使用
-* having 子句在查询过程中慢于聚合语句(sum,min,max,avg,count)，而 where 子句在查询过程中则快于聚合语句(sum,min,max,avg,count)，如下示例
+* having 子句在查询过程中慢于聚合语句（sum,min,max,avg,count)，而 where 子句在查询过程中则快于聚合语句（sum,min,max,avg,count)，如下示例
 
 
 ```sql
@@ -106,7 +106,7 @@ select reportsto as manager, count(*) as reports from employees  group by repo
 
 关于「基于块的嵌套循环连接」，此处进行必要的补充说明，在基于块的嵌套循环连接中
 * 首先，使用连接缓冲区（Join Buffer），即执行连接查询前申请的一块固定大小的内存，先把若干条驱动表结果集中的记录装在这个 Join Buffer 中
-* 然后开始扫描被驱动表，每一条被驱动表的记录一次性和 Join Buffer 中的多条驱动表记录做匹配。因为匹配的过程都是在内存中完成的，所以这样可以显著减少被驱动表的I/O代价。
+* 然后开始扫描被驱动表，每一条被驱动表的记录一次性和 Join Buffer 中的多条驱动表记录做匹配。因为匹配的过程都是在内存中完成的，所以这样可以显著减少被驱动表的 I/O 代价。
 
 
 
@@ -176,11 +176,19 @@ MySQL 中连接查询采用的是嵌套循环连接算法，驱动表会被访�
 
 #### 条件过滤在EXPLAIN中的表现
 
-在 EXPLAIN 的输出中，`rows` 字段表示所选择的索引访问方式预估的扫描记录数，`filtered` 字段反映了条件过滤。**`filtered` 值是一个百分比，表示通过查询条件获取的最终记录行数占通过 `type` 字段指明的搜索方式搜索出来的记录行数的百分比**
-* 最大值是 100，表示没有进行任何过滤
-* 该值越小，说明条件过滤效果越好
 
-举个例子，如果一个 SQL 的执行计划，`rows` 为 200，`filtered` 为 10（即 10%），那么最终预估的扫描记录数为 `200*10% = 20`。
+
+
+在 expalin 的输出中，`rows` 字段表示所选择的索引访问方式预估的扫描记录数，`filtered` 字段反映了条件过滤。
+
+`filtered` 值是一个百分比，表示通过查询条件获取的最终记录行数占通过 `type` 字段指明的搜索方式搜索出来的记录行数的百分比。
+1. 最大值是 100，表示没有进行任何过滤
+2. 该值越小，说明条件过滤效果越好
+
+
+举个例子，如果一个 SQL 的执行计划，rows 为 200，filtered 为 10（即 10%），那么最终预估的扫描记录数为 `200*10%` = 20。
+
+
 
 
 
@@ -193,7 +201,7 @@ SELECT *
 FROM employee JOIN department 
 ON employee.dept_no = department.dept_no
 WHERE employee.first_name = 'John'
-AND employee.hire_date BETWEEN '2018-01-01' AND '2018-06-01';\
+AND employee.hire_date BETWEEN '2018-01-01' AND '2018-06-01';
 ```
 
 两张表的数据信息如下

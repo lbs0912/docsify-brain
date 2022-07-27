@@ -274,7 +274,7 @@ public class ThreadLocal<T> {
 如上 `ThreadLocal` 源码可知，`ThreadLocalMap` 中的 key 使用了弱引用，将将 `ThreadLocal` 对象的生命周期与线程的生命周期解绑。
 
 
-`ThreadLocalMap` 的 `Entry`，只能使用 ·ThreadLocal` 作为 key，来存储K-V 结构的数据。
+`ThreadLocalMap` 的 `Entry`，只能使用 `ThreadLocal` 作为 key，来存储K-V 结构的数据。
 
 
 下面，讨论下为什么 `ThreadLocalMap` 中的 key 要使用弱引用，使用强引用可以吗，以及为什么会造成内存泄露。

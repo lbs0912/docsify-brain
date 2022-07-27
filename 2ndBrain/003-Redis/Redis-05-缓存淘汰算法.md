@@ -157,6 +157,12 @@ class LRUCache extends LinkedHashMap<Integer, Integer>{
 3. 在双向链表的实现中，使用一个伪头部（dummy head）和伪尾部（dummy tail）标记界限，这样在添加节点和删除节点的时候就不需要检查相邻的节点是否存在
 
 
+在实际的 `get()` 和 `put()` 操作时，
+1. `get()` 操作时，从哈希表中取出节点，然后再将该节点调整到双向链表的头部
+2. `put()` 操作时
+   * 若该 key 已经存在，则执行 `get()` 操作（会把节点调整到双向链表的头部），并更新 value 值
+   * 若该 key 不存在，则插入一个新的节点，判断下 `size` 和 `capacity` 的关系，若未满，则将其插入到双向链表的头部；否则，还需要将双向链表尾部节点删除
+
 
 ```java
 public class LRUCache {
@@ -173,9 +179,9 @@ public class LRUCache {
         }
     }
 
-    //HashMap
+    //HashMap 用于取元素
     private Map<Integer, DLinkedNode> cache = new HashMap<Integer, DLinkedNode>();
-    //双向链表
+    //双向链表 维护使用频率
     private DLinkedNode head, tail;
     
     private int size;
@@ -250,13 +256,6 @@ public class LRUCache {
         return res;
     }
 }
-
-/**
- * Your LRUCache object will be instantiated and called as such:
- * LRUCache obj = new LRUCache(capacity);
- * int param_1 = obj.get(key);
- * obj.put(key,value);
- */
 ```
 
 
@@ -307,6 +306,10 @@ int expireIfNeeded(redisDb *db, robj *key, int force_delete_expired) {
 
 
 #### 定期删除
+
+> Redis 过期键值删除使用的是贪心策略，它每秒会进行 10 次过期扫描（即每100ms扫描一次），此配置可在 `redis.conf` 进行配置，默认值是 `hz 10`，Redis 会随机抽取 20 个值，删除这 20 个键中过期的键，如果过期 key 的比例超过 25% ，重复执行此流程。
+
+
 * 如果仅采用「惰性删除」策略清理过期数据，会产生内存浪费的问题。比如，某 key 过期后一直无客户端的访问请求，则该 key 的数据会一直占用内用。
 * 为解决上述问题，Redis 在采用「惰性删除」策略的同时，也采用了「定期删除」策略。
 
@@ -321,7 +324,18 @@ int expireIfNeeded(redisDb *db, robj *key, int force_delete_expired) {
    1. 从过期字典中随机 20 个 key（并不会检查所有的库，所有的键，会随机选取）；
    2. 删除这 20 个 key 中已经过期的 key；
    3. 如果过期的 key 比率超过 25%，那就重复步骤 1；
-* 同时，为了保证过期扫描不会出现循环过度，导致线程卡死现象，算法还增加了扫描时间的上限，默认不会超过 25ms
+* 同时，为了保证过期扫描不会出现循环过度，导致线程卡死现象，算法还增加了扫描时间的上限，默认不会超过 25ms。
+
+
+
+
+**我们要尽量避免大量数据同时失效。** 这是因为
+1. 如果在大型系统中有大量缓存在同一时间同时过期，那么会导致 Redis 循环多次持续扫描删除过期字典，直到过期字典中过期键值被删除的比较稀疏为止，而在整个执行过程会导致 Redis 的读写出现明显的卡顿，卡顿的另一种原因是内存管理器需要频繁回收内存页，因此也会消耗一定的 CPU。
+2. 为了避免这种卡顿现象的产生，我们需要预防大量的缓存在同一时刻一起过期，就简单的解决方案就是在过期时间的基础上添加一个指定范围的随机数。
+
+
+
+
 
 #### 从库的过期策略
 * 从库不会进行过期扫描，从库对过期的处理是被动的。
@@ -389,7 +403,7 @@ maxmemory-samples 50
 ![](https://image-bed-20181207-1257458714.cos.ap-shanghai.myqcloud.com/back-end-2022/redis-expire-data-del-time-2.png)
 
 * 上图中，绿色部分是新加入的 key，深灰色部分是老旧的 key，浅灰色部分是通过 LRU 算法淘汰掉的 key。从图中可以看出，采样数量越大，近似 LRU 算法的效果越接近严格 LRU 算法。
-* Redis3.0 在算法中增加了「淘汰池」，进一步提升了近似 LRU 算法的效果。
+* Redis 3.0 在算法中增加了「淘汰池」，进一步提升了近似 LRU 算法的效果。
 
 
 
